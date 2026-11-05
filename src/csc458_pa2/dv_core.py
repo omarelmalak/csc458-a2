@@ -131,8 +131,31 @@ class DVCore(RoutingCore):
                 A newly allocated prefix-to-metric dictionary tailored to
                 ``neighbor``.
             """
-            # TODO 1: Implement _advertisement_for.
-            return {}  # Students must replace this line with their implementation
+            all_prefixes = set()
+
+            for prefix in self.known_prefixes:
+                all_prefixes.add(prefix)
+
+            for prefix in self.routes:
+                all_prefixes.add(prefix)
+  
+            advertisement = {}
+            for prefix in all_prefixes:
+                if prefix not in self.routes:
+                    advertisement[prefix] = INFINITY
+                else:
+                    distance = self.routes[prefix].metric
+                    next_hop = self.routes[prefix].next_hop
+
+                    if self.mode == "split_horizon" and next_hop == neighbor:
+                        continue
+                    elif self.mode == "poison_reverse" and next_hop == neighbor:
+                        advertisement[prefix] = INFINITY
+                        continue
+                    
+                    advertisement[prefix] = distance
+
+            return advertisement
     
     def _recompute_routes(self) -> bool:
         """Rebuild this router's table with the Bellman-Ford recurrence.
