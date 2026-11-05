@@ -1,0 +1,10 @@
+{
+  "name": "Three-router Mininet introduction",
+  "routers": ["R1", "R2", "R3"],
+  "links": [
+    {"a": "R1", "b": "R2", "cost": 1},
+    {"a": "R2", "b": "R3", "cost": 1}
+  ],
+  "events": [],
+  "convergence_timeout": 8
+}

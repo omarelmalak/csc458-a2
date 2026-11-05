@@ -1,0 +1,12 @@
+{
+  "name": "Count-to-infinity demonstration",
+  "routers": ["R1", "R2", "R3"],
+  "links": [
+    {"a": "R1", "b": "R2", "cost": 1},
+    {"a": "R2", "b": "R3", "cost": 1}
+  ],
+  "events": [
+    {"after": 2.0, "type": "link_down", "a": "R1", "b": "R2"}
+  ],
+  "convergence_timeout": 15
+}

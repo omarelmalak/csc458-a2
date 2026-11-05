@@ -1,0 +1,14 @@
+{
+  "name": "New low-cost link",
+  "routers": ["R1", "R2", "R3", "R4"],
+  "links": [
+    {"a": "R1", "b": "R2", "cost": 2},
+    {"a": "R2", "b": "R3", "cost": 2},
+    {"a": "R3", "b": "R4", "cost": 2},
+    {"a": "R1", "b": "R4", "cost": 1, "active": false}
+  ],
+  "events": [
+    {"after": 2.0, "type": "link_up", "a": "R1", "b": "R4", "cost": 1}
+  ],
+  "convergence_timeout": 12
+}
