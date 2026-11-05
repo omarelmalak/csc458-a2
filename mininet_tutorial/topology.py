@@ -13,6 +13,7 @@ class TutorialTopology( Topo ):
       hosts.append(host)
 
     # add a switch to the network
+    # s1 = self.addSwitch( 's1' )
     switches = []
     for i in range(1, 3):
       switchname = f's{i}'
