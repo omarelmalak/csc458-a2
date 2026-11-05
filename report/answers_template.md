@@ -182,10 +182,32 @@ Connecting to host 10.0.0.8, port 5201
 The `ping -c 5` packet loss increased from 0% (0/5 packets lost) on the unconstrained baseline to 20% (1/5 packets lost). This is because of the 10% loss we added on the link between `s1` and `s2`. The `ping -c 5` average RTT increased from 0.898 ms to 80.862 ms. This is because of the 30 ms delay we added on the link between `s1` and `s2` (i.e. the RTT increases by about `2 x 30 ms = 60 ms` for each ping). The `iperf3` throughput measurement decreased from 92.4 Gbits/sec to 766 Kbits/sec also because of the 50 Mbit/s bandwidth constraint between `s1` and `s2` and also potentially the 10% packet loss as well because if `h1` is using a congestion control algorithm like AIMD, it could cut its flow rate by a large amount for each packet lost, which could do a ton of damage to the final throughput.
 
 8. **Remote controller / SDN.** Describe what happened when you used the remote reference controller and what happened after the controller was stopped or unavailable. Distinguish the switch data plane from the controller control plane. If the final course VM does not expose the `controller` command, record that fact and explain the experiment you would perform; no mark is lost for that VM-specific absence.
+When we used the remote reference controller, everything was working the same way as it was when the controller was initiated by Mininet by default. However, when we stopped the remote reference controller, there was zero reachability (e.g. a `pingall` yielded 100% packet loss). This is because there was no controller control plane available to program the switches with the information they need to be able to forward packets through the links, so the data plane (acted on by the switches) has no knowledge of any frame forwarding rules to work with. 
 
 9. **Bridge to PA2 routing.** In `tools/mininet_intro.py`, why does `h1` initially fail to reach `h3` even though the physical links are up? Paste the final `ip route` output from R1/R2/R3 after you install correct static routes. After `link r2 r3 down`, which entries remain and why does reachability fail? Relate this to why a dynamic routing protocol is needed.
+`h1` initially fails to reach `h3` because the routing tables of `r1`, `r2`, and `r3` are incomplete. Specifically, `h1` with IP address 10.1.0.2/24 is trying to reach `h3` with IP address 10.3.0.2/24. It sets the destination to 10.3.0.2/24 in the IP packet header and sends it out to its immediate router `r1`. However, `r1` has no information in its routing table of which next hop to send the packet with destination 10.3.0.2/24, so it drops the packet immediately. Therefore, we have to act as the "control plane" and manually add the next-hops such that each host can reach each of the other hosts through `r1`, `r2`, and `r3`. The result of this as follows:
+```
+mininet> r1 ip route
+10.1.0.0/24 dev r1-stub proto kernel scope link src 10.1.0.1 
+10.2.0.0/24 via 10.254.0.6 dev r1-r2 
+10.3.0.0/24 via 10.254.0.6 dev r1-r2 
+10.254.0.4/30 dev r1-r2 proto kernel scope link src 10.254.0.5 
+mininet> r2 ip route
+10.1.0.0/24 via 10.254.0.5 dev r2-r1 
+10.2.0.0/24 dev r2-stub proto kernel scope link src 10.2.0.1 
+10.3.0.0/24 via 10.254.1.154 dev r2-r3 
+10.254.0.4/30 dev r2-r1 proto kernel scope link src 10.254.0.6 
+10.254.1.152/30 dev r2-r3 proto kernel scope link src 10.254.1.153 
+mininet> r3 ip route
+10.1.0.0/24 via 10.254.1.153 dev r3-r2 
+10.2.0.0/24 via 10.254.1.153 dev r3-r2 
+10.3.0.0/24 dev r3-stub proto kernel scope link src 10.3.0.1 
+10.254.1.152/30 dev r3-r2 proto kernel scope link src 10.254.1.154
+```
+When executing `link r2 r3 down`, there's a problem because the entry `10.3.0.0/24 via 10.254.0.6 dev r1-r2` still exists in the routing table of `r1`. In other words, `r1` still believes it can reach the subnet 10.3.0.0/24 via `r2`, but that's no longer true because the link from `r2` to `r3` is down and there is no other way for `r2` to reach that subnet. Therefore, reachability from `h1` to `h3` will fail because after `r1` decides to still send the packet destined for 10.3.0.0/24 to `r2`, but `r2` can't route the packet to `r3` so it gets dropped. Therefore, a dynamic routing protocol is needed to be able to inform `r1` that `r2` can no longer route a packet to any IP in subnet 10.3.0.0/24. 
 
 10. **PA1 reuse.** Explain the separation among: (a) PA1 longest-prefix forwarding lookup, (b) a PA2 DV/LS route computation for a destination prefix, and (c) the Linux FIB entry installed by the staff runtime.
+Longest-prefix lookup we did in PA1 occurs in the data plane when the router decides where to route a packet by finding the longest prefix match in its routing table for an IP packet's destination and sending the packet to the mapped next-hop. This routing table has to be built in the first place (which was assumed in PA1), which is where PA2's DV/LS route computation comes in. This route computation is responsible for building the routing table for each of the routers at the control plane level. Once the route computations are complete, the staff runtime allows the control plane to connect to the data plane operated by the routers during packet routing by adding the routes as Linux FIB entries.
 
 ## Part III - DV/LS experiments
 
