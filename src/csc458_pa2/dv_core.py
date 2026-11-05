@@ -220,8 +220,65 @@ class DVCore(RoutingCore):
             ``True`` exactly when the newly computed routing table differs
             from the old table; otherwise ``False``.
         """
-        # TODO 2: Implement _recompute_routes.
-        return False  # Students must replace this line with their implementation
+        new_routing_table = {}
+        for prefix in self.routes:
+            distance = self.routes[prefix].metric
+            next_hop = self.routes[prefix].next_hop
+            if distance == 0 and next_hop is None:
+                new_routing_table[prefix] = Route(0, None)
+
+        for neighbor in self.neighbor_vectors:
+            advertisements = self.neighbor_vectors[neighbor]
+            for prefix in advertisements:
+                if prefix not in self.known_prefixes:
+                    self.known_prefixes.add(prefix)
+
+        change_made = False
+        for prefix in self.known_prefixes:
+            # Own prefix case (already added at the beginning of function)
+            if prefix in new_routing_table:
+                continue
+
+            route = self._find_minimum_route_for_prefix(prefix)
+             
+            new_routing_table[prefix] = route
+
+            if prefix not in self.routes:
+                change_made = True
+                continue
+
+            if route.metric != self.routes[prefix].metric or route.next_hop != self.routes[prefix].next_hop:
+                change_made = True
+
+        self.routes = new_routing_table
+        return change_made
+
+    
+    def _find_minimum_route_for_prefix(self, prefix) -> Route:
+        # Return format example: Route(2, "R3")
+        min_distance = INFINITY
+        min_neighbor = None
+
+        min_route = (min_distance, min_neighbor)
+
+        for neighbor in self.neighbor_vectors:
+            advertisements = self.neighbor_vectors[neighbor]
+            if prefix in advertisements:
+                advertised_distance_vector = advertisements[prefix]
+                local_distance = self.neighbors[neighbor]
+
+                total_distance = advertised_distance_vector + local_distance
+
+                if total_distance >= INFINITY:
+                    continue
+
+                curr_route = (total_distance, neighbor)
+                
+                if curr_route < min_route:
+                    min_route = curr_route
+        
+        return Route(min_route[0], min_route[1])
+
 
     def _send_updates(self, only: str | None = None) -> None:
         """Send a full DV to every active neighbor, or only one neighbor."""
