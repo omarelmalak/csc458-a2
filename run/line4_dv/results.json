@@ -1,0 +1,19 @@
+{
+  "dv_mode": "basic",
+  "events": [],
+  "final_stats": {
+    "bytes_received": 0,
+    "bytes_sent": 340,
+    "messages_received": 0,
+    "messages_sent": 5
+  },
+  "initial_convergence_seconds": null,
+  "initial_stats": {
+    "bytes_received": 0,
+    "bytes_sent": 340,
+    "messages_received": 0,
+    "messages_sent": 5
+  },
+  "protocol": "DV",
+  "topology": "Four-router line"
+}

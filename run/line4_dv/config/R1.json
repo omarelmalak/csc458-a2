@@ -1,0 +1,13 @@
+{
+  "neighbors": {
+    "R2": {
+      "active": true,
+      "cost": 1,
+      "ifname": "r1-r2",
+      "local_ip": "10.254.0.5",
+      "peer_ip": "10.254.0.6"
+    }
+  },
+  "own_prefix": "10.1.0.0/24",
+  "router_id": "R1"
+}

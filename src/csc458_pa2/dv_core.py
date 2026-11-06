@@ -140,12 +140,19 @@ class DVCore(RoutingCore):
                 all_prefixes.add(prefix)
   
             advertisement = {}
-            for prefix in all_prefixes:
+            for prefix in sorted(all_prefixes):
+                if prefix == self.own_prefix:
+                    advertisement[prefix] = 0
+                    continue
+
                 if prefix not in self.routes:
                     advertisement[prefix] = INFINITY
                 else:
                     distance = self.routes[prefix].metric
                     next_hop = self.routes[prefix].next_hop
+
+                    if distance > INFINITY:
+                        distance = INFINITY
 
                     if self.mode == "split_horizon" and next_hop == neighbor:
                         continue
@@ -221,11 +228,7 @@ class DVCore(RoutingCore):
             from the old table; otherwise ``False``.
         """
         new_routing_table = {}
-        for prefix in self.routes:
-            distance = self.routes[prefix].metric
-            next_hop = self.routes[prefix].next_hop
-            if distance == 0 and next_hop is None:
-                new_routing_table[prefix] = Route(0, None)
+        new_routing_table[self.own_prefix] = Route(0, None)
 
         for neighbor in self.neighbor_vectors:
             advertisements = self.neighbor_vectors[neighbor]

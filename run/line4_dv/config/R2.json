@@ -1,0 +1,20 @@
+{
+  "neighbors": {
+    "R1": {
+      "active": true,
+      "cost": 1,
+      "ifname": "r2-r1",
+      "local_ip": "10.254.0.6",
+      "peer_ip": "10.254.0.5"
+    },
+    "R3": {
+      "active": true,
+      "cost": 2,
+      "ifname": "r2-r3",
+      "local_ip": "10.254.1.153",
+      "peer_ip": "10.254.1.154"
+    }
+  },
+  "own_prefix": "10.2.0.0/24",
+  "router_id": "R2"
+}
