@@ -255,7 +255,6 @@ class DVCore(RoutingCore):
 
     
     def _find_minimum_route_for_prefix(self, prefix) -> Route:
-        # Return format example: Route(2, "R3")
         min_distance = INFINITY
         min_neighbor = None
 
@@ -362,8 +361,26 @@ class DVCore(RoutingCore):
             cost: New positive link cost strictly below :data:`INFINITY`,
                 or ``None`` when the link is down.
         """
-        # TODO 3: Implement on_link_change.
-        pass
+        if cost is None:
+            if neighbor in self.neighbors:
+                self.neighbors.pop(neighbor)
+            if neighbor in self.neighbor_vectors:
+                self.neighbor_vectors.pop(neighbor)
+        else:
+            if cost >= INFINITY or cost < 1:
+                return
+    
+            self.neighbors[neighbor] = cost
+            if neighbor not in self.neighbor_vectors:
+                self.neighbor_vectors[neighbor] = {}
+        
+        change_made = self._recompute_routes()
+
+        if change_made:
+            self._send_updates()
+        else:
+            if cost is not None:
+                self._send_updates(neighbor)
 
     def on_control(self, src: str, message: ControlMessage) -> None:
         """Validate and process a distance vector received from ``src``.
