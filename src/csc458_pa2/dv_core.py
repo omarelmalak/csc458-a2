@@ -457,8 +457,41 @@ class DVCore(RoutingCore):
             src: Router ID from which the control message was received.
             message: Candidate DV control message to validate and process.
         """
-        # TODO 4: Implement on_control.
-        pass
+        if src not in self.neighbors:
+            return
+        if message.protocol != "DV" or message.payload["type"] != "dv" or type(message.payload["vector"]) is not dict:
+            return
+        
+        updated_entry = {}
+        for prefix in message.payload["vector"]:
+            if type(prefix) is not str:
+                continue
+
+            if "/" not in prefix:
+                continue
+            
+            distance = message.payload["vector"][prefix]
+
+            if type(distance) is not int:
+                continue
+
+            if distance < 0:
+                continue
+            
+            if distance > INFINITY:
+                distance = INFINITY
+
+            updated_entry[prefix] = distance
+            
+            if prefix not in self.known_prefixes:
+                self.known_prefixes.add(prefix)
+        
+        self.neighbor_vectors[src] = updated_entry
+
+        change_made = self._recompute_routes()
+
+        if change_made:
+            self._send_updates()
 
     def on_periodic(self) -> None:
         """Send a periodic full-vector refresh."""
